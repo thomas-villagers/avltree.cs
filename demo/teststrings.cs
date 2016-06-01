@@ -7,7 +7,7 @@ public class TestAVL {
     avltree.Insert("Tyrion"); 
     avltree.Insert("Myrcella"); 
     avltree.Insert("Joffrey"); 
-    avltree.Insert("Tomnen"); 
+    avltree.Insert("Tommen"); 
     avltree.Insert("Cersei"); 
 
 //    var n = avltree.Find("Tywin");

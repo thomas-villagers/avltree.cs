@@ -3,13 +3,16 @@
 <div id="text-table-of-contents">
 <ul>
 <li><a href="#orgheadline1">1. Balanced binary AVL Tree</a></li>
-<li><a href="#orgheadline2">2. Graphviz Output</a></li>
-<li><a href="#orgheadline7">3. Demo</a>
+<li><a href="#orgheadline2">2. ToList Extension</a></li>
+<li><a href="#orgheadline3">3. Graphviz Output</a></li>
+<li><a href="#orgheadline10">4. Demo</a>
 <ul>
-<li><a href="#orgheadline3">3.1. Inorder Insertion and Single Rotations</a></li>
-<li><a href="#orgheadline4">3.2. Double Rotations</a></li>
-<li><a href="#orgheadline5">3.3. Strings</a></li>
-<li><a href="#orgheadline6">3.4. Random Insertion</a></li>
+<li><a href="#orgheadline4">4.1. Inorder Insertion and Single Rotations</a></li>
+<li><a href="#orgheadline5">4.2. Double Rotations</a></li>
+<li><a href="#orgheadline6">4.3. Strings</a></li>
+<li><a href="#orgheadline7">4.4. Random Insertion</a></li>
+<li><a href="#orgheadline8">4.5. Traversal</a></li>
+<li><a href="#orgheadline9">4.6. Sort Performance</a></li>
 </ul>
 </li>
 </ul>
@@ -42,11 +45,7 @@
     
       public void Insert(T value) {
         numElements++; 
-        if (root == null) 
-          root = new Node(value, null); 
-        else {
-          root = root.Insert(value, compare); 
-        }
+        root = (root == null) ? new Node(value, null) : root.Insert(value, compare); 
       }
     
       public Node Find(T value) {
@@ -167,7 +166,57 @@
 -   **Insertion:** O(log n)
 -   **Find:** O(log n)
 
-# Graphviz Output<a id="orgheadline2"></a>
+# ToList Extension<a id="orgheadline2"></a>
+
+    using System; 
+    using System.Collections.Generic; 
+    
+    static class AVLTreeListExtensions {
+    
+      public delegate void TraversalDelegate<T>(AVLTree<T>.Node tree, List<T> list); 
+    
+      private static void TraversePreorder<T>(AVLTree<T>.Node tree, List<T> list) {
+        if (tree.left != null) TraversePreorder(tree.left, list);
+        list.Add(tree.value);
+        if (tree.right != null) TraversePreorder(tree.right, list); 
+      }
+    
+      private static void TraversePostorder<T>(AVLTree<T>.Node tree, List<T> list) {
+        if (tree.right != null) TraversePostorder(tree.right, list); 
+        list.Add(tree.value);
+        if (tree.left != null) TraversePostorder(tree.left, list);
+      }
+    
+      private static void TraverseInorder<T>(AVLTree<T>.Node tree, List<T> list) {
+        list.Add(tree.value);
+        if (tree.right != null) TraverseInorder(tree.right, list); 
+        if (tree.left != null) TraverseInorder(tree.left, list);
+      }
+    
+      public static TraversalDelegate<T> Postorder<T>(this AVLTree<T> tree) {
+        return TraversePostorder<T>; 
+      }
+    
+      public static TraversalDelegate<T> Preorder<T>(this AVLTree<T> tree) {
+        return TraversePreorder<T>; 
+      }
+    
+      public static TraversalDelegate<T> Inorder<T>(this AVLTree<T> tree) {
+        return TraverseInorder<T>; 
+      }
+    
+      public static List<T> ToList<T>(this AVLTree<T> tree, TraversalDelegate<T> traversalmethod) {
+        var list = new List<T>();
+        traversalmethod(tree.root, list);
+        return list;
+      }
+    
+      public static List<T> ToList<T>(this AVLTree<T> tree) {
+        return tree.ToList<T>(TraversePreorder<T>);
+      }
+    }
+
+# Graphviz Output<a id="orgheadline3"></a>
 
     using System;
     
@@ -214,9 +263,9 @@
       }
     }
 
-# Demo<a id="orgheadline7"></a>
+# Demo<a id="orgheadline10"></a>
 
-## Inorder Insertion and Single Rotations<a id="orgheadline3"></a>
+## Inorder Insertion and Single Rotations<a id="orgheadline4"></a>
 
     public class TestAVL {
     
@@ -234,7 +283,7 @@
 
 ![img](images/avltree.png)
 
-## Double Rotations<a id="orgheadline4"></a>
+## Double Rotations<a id="orgheadline5"></a>
 
     public class TestAVL {
     
@@ -264,7 +313,7 @@
 
 ![img](images/avltree2.png)
 
-## Strings<a id="orgheadline5"></a>
+## Strings<a id="orgheadline6"></a>
 
     public class TestAVL {
     
@@ -275,7 +324,7 @@
         avltree.Insert("Tyrion"); 
         avltree.Insert("Myrcella"); 
         avltree.Insert("Joffrey"); 
-        avltree.Insert("Tomnen"); 
+        avltree.Insert("Tommen"); 
         avltree.Insert("Cersei"); 
     
     //    var n = avltree.Find("Tywin");
@@ -290,7 +339,7 @@
 
 ![img](images/avltree3.png)
 
-## Random Insertion<a id="orgheadline6"></a>
+## Random Insertion<a id="orgheadline7"></a>
 
 Sibling heights should only differ by 1: 
 
@@ -316,3 +365,56 @@ Sibling heights should only differ by 1:
     mono demo/testrandom.exe
 
 ![img](images/avltree4.png)
+
+## Traversal<a id="orgheadline8"></a>
+
+    public class TestTraverse {
+    
+      public static void Main() {
+        var avltree = new AVLTree<int>(); 
+        for(int i = 15; i > 0; i--)
+          avltree.Insert(i); 
+    
+        foreach(var i in avltree.ToList())
+          System.Console.WriteLine(i); 
+        foreach(var i in avltree.ToList(avltree.Postorder()))
+          System.Console.WriteLine(i); 
+    
+      }
+    }
+
+    mcs demo/testtraverse.cs src/avltreelistextensions.cs src/avltree.cs
+    mono demo/testtraverse.exe
+
+## Sort Performance<a id="orgheadline9"></a>
+
+    using System; 
+    using System.Collections.Generic; 
+    using System.Diagnostics; 
+    
+    public class Treesort {
+    
+      public static void Main() {
+    
+        int n = 1000000;
+        var random = new Random();
+        var L = new List<int>(n);
+        Console.WriteLine("Generating {0} random elements...", n); 
+        for(int i = 0; i < n; i++)
+          L.Add(random.Next()); 
+    
+        var T = new AVLTree<int>();
+        Console.WriteLine("Sorting {0} random elements...", n); 
+        var sw = Stopwatch.StartNew(); 
+        foreach(var i in L) 
+          T.Insert(i); 
+        var elapsedInsert = sw.ElapsedMilliseconds;
+        L = T.ToList(); 
+        var elapsedRemove = sw.ElapsedMilliseconds;
+        sw.Stop(); 
+        Console.WriteLine("Insertion: {0} Removal: {1} Combined: {2}", elapsedInsert, elapsedRemove, elapsedInsert + elapsedRemove); 
+      }
+    }
+
+    mcs demo/treesort.cs src/avltreelistextensions.cs src/avltree.cs
+    mono demo/treesort.exe

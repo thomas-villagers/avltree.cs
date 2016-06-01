@@ -21,11 +21,7 @@ public class AVLTree<T> {
 
   public void Insert(T value) {
     numElements++; 
-    if (root == null) 
-      root = new Node(value, null); 
-    else {
-      root = root.Insert(value, compare); 
-    }
+    root = (root == null) ? new Node(value, null) : root.Insert(value, compare); 
   }
 
   public Node Find(T value) {

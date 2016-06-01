@@ -26,11 +26,7 @@
   
     public void Insert(T value) {
       numElements++; 
-      if (root == null) 
-        root = new Node(value, null); 
-      else {
-        root = root.Insert(value, compare); 
-      }
+      root = (root == null) ? new Node(value, null) : root.Insert(value, compare); 
     }
 
     public Node Find(T value) {
@@ -151,6 +147,58 @@
 
 - Insertion :: O(log n)
 - Find :: O(log n)
+
+* ToList Extension 
+
+#+BEGIN_SRC csharp :tangle src/avltreelistextensions.cs
+using System; 
+using System.Collections.Generic; 
+
+static class AVLTreeListExtensions {
+
+  public delegate void TraversalDelegate<T>(AVLTree<T>.Node tree, List<T> list); 
+
+  private static void TraversePreorder<T>(AVLTree<T>.Node tree, List<T> list) {
+    if (tree.left != null) TraversePreorder(tree.left, list);
+    list.Add(tree.value);
+    if (tree.right != null) TraversePreorder(tree.right, list); 
+  }
+
+  private static void TraversePostorder<T>(AVLTree<T>.Node tree, List<T> list) {
+    if (tree.right != null) TraversePostorder(tree.right, list); 
+    list.Add(tree.value);
+    if (tree.left != null) TraversePostorder(tree.left, list);
+  }
+
+  private static void TraverseInorder<T>(AVLTree<T>.Node tree, List<T> list) {
+    list.Add(tree.value);
+    if (tree.right != null) TraverseInorder(tree.right, list); 
+    if (tree.left != null) TraverseInorder(tree.left, list);
+  }
+
+  public static TraversalDelegate<T> Postorder<T>(this AVLTree<T> tree) {
+    return TraversePostorder<T>; 
+  }
+
+  public static TraversalDelegate<T> Preorder<T>(this AVLTree<T> tree) {
+    return TraversePreorder<T>; 
+  }
+
+  public static TraversalDelegate<T> Inorder<T>(this AVLTree<T> tree) {
+    return TraverseInorder<T>; 
+  }
+
+  public static List<T> ToList<T>(this AVLTree<T> tree, TraversalDelegate<T> traversalmethod) {
+    var list = new List<T>();
+    traversalmethod(tree.root, list);
+    return list;
+  }
+
+  public static List<T> ToList<T>(this AVLTree<T> tree) {
+    return tree.ToList<T>(TraversePreorder<T>);
+  }
+}
+#+END_SRC
 
 * Graphviz Output 
 
@@ -347,7 +395,7 @@ public class TestAVL {
     avltree.Insert("Tyrion"); 
     avltree.Insert("Myrcella"); 
     avltree.Insert("Joffrey"); 
-    avltree.Insert("Tomnen"); 
+    avltree.Insert("Tommen"); 
     avltree.Insert("Cersei"); 
 
 //    var n = avltree.Find("Tywin");
@@ -569,3 +617,105 @@ digraph G {
 
 #+RESULTS:
 [[file:images/avltree4.png]]
+
+** Traversal 
+
+#+BEGIN_SRC csharp :tangle demo/testtraverse.cs 
+public class TestTraverse {
+
+  public static void Main() {
+    var avltree = new AVLTree<int>(); 
+    for(int i = 15; i > 0; i--)
+      avltree.Insert(i); 
+
+    foreach(var i in avltree.ToList())
+      System.Console.WriteLine(i); 
+    foreach(var i in avltree.ToList(avltree.Postorder()))
+      System.Console.WriteLine(i); 
+
+  }
+}
+#+END_SRC
+
+#+BEGIN_SRC sh :results verbatim
+mcs demo/testtraverse.cs src/avltreelistextensions.cs src/avltree.cs
+mono demo/testtraverse.exe
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+15
+14
+13
+12
+11
+10
+9
+8
+7
+6
+5
+4
+3
+2
+1
+#+end_example
+
+
+** Sort Performance 
+
+#+BEGIN_SRC csharp :tangle demo/treesort.cs 
+using System; 
+using System.Collections.Generic; 
+using System.Diagnostics; 
+
+public class Treesort {
+
+  public static void Main() {
+
+    int n = 1000000;
+    var random = new Random();
+    var L = new List<int>(n);
+    Console.WriteLine("Generating {0} random elements...", n); 
+    for(int i = 0; i < n; i++)
+      L.Add(random.Next()); 
+
+    var T = new AVLTree<int>();
+    Console.WriteLine("Sorting {0} random elements...", n); 
+    var sw = Stopwatch.StartNew(); 
+    foreach(var i in L) 
+      T.Insert(i); 
+    var elapsedInsert = sw.ElapsedMilliseconds;
+    L = T.ToList(); 
+    var elapsedRemove = sw.ElapsedMilliseconds;
+    sw.Stop(); 
+    Console.WriteLine("Insertion: {0} Removal: {1} Combined: {2}", elapsedInsert, elapsedRemove, elapsedInsert + elapsedRemove); 
+  }
+}
+#+END_SRC
+
+#+BEGIN_SRC sh :results verbatim
+mcs demo/treesort.cs src/avltreelistextensions.cs src/avltree.cs
+mono demo/treesort.exe
+#+END_SRC
+
+#+RESULTS:
+: Generating 1000000 random elements...
+: Sorting 1000000 random elements...
+: Insertion: 1193 Removal: 1233 Combined: 2426
+
