@@ -1,0 +1,571 @@
+#+TITLE: Generic AVL Tree in C#
+
+* Balanced binary AVL Tree
+
+#+BEGIN_SRC csharp :tangle src/avltree.cs 
+  using System;
+  using System.Collections.Generic; 
+
+  public class AVLTree<T> {
+
+    public Node root;
+    int numElements;
+    Func<T, T, int> compare; 
+  
+    public int Count {
+      get { return numElements; }
+    }
+
+    public AVLTree(Func<T, T, int> compare) {
+      this.compare = compare; 
+      root = null;
+      numElements = 0; 
+    }
+  
+    public AVLTree() : this((x,y) => Comparer<T>.Default.Compare(x,y)) { }
+  
+    public void Insert(T value) {
+      numElements++; 
+      if (root == null) 
+        root = new Node(value, null); 
+      else {
+        root = root.Insert(value, compare); 
+      }
+    }
+
+    public Node Find(T value) {
+      return root.Find(value, compare);
+    }
+  
+    public class Node {
+      public readonly T value;
+      Node parent;
+      public Node left;
+      public Node right;
+      public int height;
+    
+      public Node(T value, Node parent) {
+        this.value = value;
+        this.parent = parent;
+        left = null;
+        right = null;
+        height = 1;
+      }
+
+      public Node Insert(T value, Func<T, T, int> compare) {
+        if (compare(value, this.value) < 0) {
+          return Insert(ref left, value, compare); 
+        } else {
+          return Insert(ref right, value, compare); 
+        }
+      }
+
+      private Node Insert(ref Node node, T value, Func<T, T, int> compare) {
+        if (node == null) {
+          node = new Node(value, this); 
+          return node.Rebalance(); 
+        }
+        else  
+          return node.Insert(value, compare);
+      }    
+
+      public Node Find(T value, Func<T, T, int> compare) {
+        int cmp = compare(this.value, value);
+	if (cmp == 0) return this;
+	if (cmp > 0) return left.Find(value,compare);
+	return right.Find(value,compare);
+      }
+
+      private Node Rebalance() {
+        Node v = this;
+        Node newRoot = this; 
+        while (v != null) {
+          if (Math.Abs(ChildHeight(v.left) - ChildHeight(v.right)) > 1) {
+            v = Restructure(v);
+          }
+          v.height = 1 + v.MaxChildHeight();    
+          newRoot = v;
+          v = v.parent; 
+        }
+        return newRoot; 
+      }
+
+      private static int ChildHeight(Node child) {
+        return (child == null) ? 0 : child.height;
+      }
+
+      private int MaxChildHeight() {
+        return Math.Max(ChildHeight(left), ChildHeight(right)); 
+      }
+    
+      private Node ChildWithMaxHeight() {
+        return (ChildHeight(left) > ChildHeight(right)) ? left : right;
+      }    
+    
+      private Node Restructure(Node z) {
+        var y = z.ChildWithMaxHeight();
+        var x = y.ChildWithMaxHeight();
+        Node a,b,c; 
+        Node T1, T2; 
+        if (x == y.left && y == z.left) {
+          a = x; b = y; c = z; 
+          T1 = a.right;
+          T2 = b.right;
+        } else if (x == y.right && y == z.right) {
+          a = z; b = y; c = x; 
+          T1 = b.left;
+          T2 = c.left;
+        } else if (x == y.left && y == z.right) {
+          a = z; b = x; c = y; 
+          T1 = b.left;
+          T2 = b.right;
+        } else {
+          a = y; b = x; c = z;
+          T1 = b.left;
+          T2 = b.right;
+        }
+        if (z.parent != null) {
+          if (z == z.parent.left)
+            z.parent.left = b;
+          else z.parent.right = b; 
+        }
+        b.parent = z.parent; 
+      
+        b.left = a;
+        a.parent = b;
+        b.right = c;
+        c.parent = b;
+      
+        a.right = T1;
+        if (T1 != null) T1.parent = a; 
+        c.left = T2;
+        if (T2 != null) T2.parent = c; 
+        a.height = 1 + a.MaxChildHeight();
+        b.height = 1 + b.MaxChildHeight();
+        c.height = 1 + c.MaxChildHeight();
+        return b;
+      }        
+    }  
+  }
+#+END_SRC
+
+- Insertion :: O(log n)
+- Find :: O(log n)
+
+* Graphviz Output 
+
+#+BEGIN_SRC csharp :tangle src/avltreeextensions.cs
+using System;
+
+public static class AVLTreeExtensions {
+
+  private static void PrintNode<T>(T rootValue, T childValue) {
+    Console.WriteLine("  \"{0}\" -> \"{1}\"", rootValue, childValue);
+  }
+
+  private static void PrintNode<T>(T value, int empties) {
+    Console.WriteLine("  empty{0} [label=\"\", style=invis];", empties);
+    Console.WriteLine("  \"{0}\" -> empty{1}", value,  empties);
+  }
+
+  private static void PrintSubTree<T>(AVLTree<T>.Node node, ref int empties) {
+
+    if (node.left == null && node.right == null) {
+      Console.WriteLine("  \"{0}\" [shape=rectangle,xlabel={1}];", node.value,node.height);
+      return;
+    }
+    Console.WriteLine("  \"{0}\" [xlabel={1}];", node.value,node.height);
+
+    if (node.left != null) {
+      PrintNode(node.value, node.left.value);
+      PrintSubTree(node.left, ref empties);
+    } else if (node.right != null) {
+      PrintNode(node.value, empties++);
+    }
+    
+    if (node.right != null) {
+      PrintNode(node.value, node.right.value);
+      PrintSubTree(node.right, ref empties);
+    } else if (node.left != null) {
+      PrintNode(node.value, empties++);
+    }
+  
+  }
+
+  public static void PrintDot<T>(this AVLTree<T> tree) {
+    Console.WriteLine("digraph G {\n  forcelabels=true;");
+    int empties = 0;
+    PrintSubTree(tree.root, ref empties); 
+    Console.WriteLine("}"); 
+  }
+}
+
+#+END_SRC
+
+* Demo 
+
+** Inorder Insertion and Single Rotations
+
+#+BEGIN_SRC csharp :tangle demo/testdot.cs 
+public class TestAVL {
+
+  public static void Main() {
+    var avltree = new AVLTree<int>(); 
+    for(int i = 15; i > 0; i--)
+      avltree.Insert(i); 
+
+    avltree.PrintDot(); 
+  }
+}
+#+END_SRC
+
+#+BEGIN_SRC sh :results verbatim :wrap "SRC dot :file images/avltree.png" :exports both
+mcs demo/testdot.cs src/avltreeextensions.cs src/avltree.cs
+mono demo/testdot.exe
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC dot :file images/avltree.png
+digraph G {
+  forcelabels=true;
+  "8" [xlabel=4];
+  "8" -> "4"
+  "4" [xlabel=3];
+  "4" -> "2"
+  "2" [xlabel=2];
+  "2" -> "1"
+  "1" [shape=rectangle,xlabel=1];
+  "2" -> "3"
+  "3" [shape=rectangle,xlabel=1];
+  "4" -> "6"
+  "6" [xlabel=2];
+  "6" -> "5"
+  "5" [shape=rectangle,xlabel=1];
+  "6" -> "7"
+  "7" [shape=rectangle,xlabel=1];
+  "8" -> "12"
+  "12" [xlabel=3];
+  "12" -> "10"
+  "10" [xlabel=2];
+  "10" -> "9"
+  "9" [shape=rectangle,xlabel=1];
+  "10" -> "11"
+  "11" [shape=rectangle,xlabel=1];
+  "12" -> "14"
+  "14" [xlabel=2];
+  "14" -> "13"
+  "13" [shape=rectangle,xlabel=1];
+  "14" -> "15"
+  "15" [shape=rectangle,xlabel=1];
+}
+#+END_SRC
+
+#+RESULTS:
+[[file:images/avltree.png]]
+
+** Double Rotations 
+
+
+#+BEGIN_SRC csharp :tangle demo/testdot2.cs 
+public class TestAVL {
+
+  public static void Main() {
+    var avltree = new AVLTree<int>(); 
+    avltree.Insert(1); 
+    avltree.Insert(3); 
+    avltree.Insert(2); 
+    avltree.Insert(5); 
+    avltree.Insert(4); 
+    avltree.Insert(7); 
+    avltree.Insert(6); 
+    avltree.Insert(9); 
+    avltree.Insert(8); 
+    avltree.Insert(11); 
+    avltree.Insert(10); 
+    avltree.Insert(13); 
+    avltree.Insert(12); 
+    avltree.Insert(15); 
+    avltree.Insert(14); 
+    avltree.PrintDot(); 
+  }
+}
+#+END_SRC
+
+#+BEGIN_SRC sh :results verbatim :wrap "SRC dot :file images/avltree2.png" :exports both
+mcs demo/testdot2.cs src/avltreeextensions.cs src/avltree.cs
+mono demo/testdot2.exe
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC dot :file images/avltree2.png
+digraph G {
+  forcelabels=true;
+  "8" [xlabel=4];
+  "8" -> "4"
+  "4" [xlabel=3];
+  "4" -> "2"
+  "2" [xlabel=2];
+  "2" -> "1"
+  "1" [shape=rectangle,xlabel=1];
+  "2" -> "3"
+  "3" [shape=rectangle,xlabel=1];
+  "4" -> "6"
+  "6" [xlabel=2];
+  "6" -> "5"
+  "5" [shape=rectangle,xlabel=1];
+  "6" -> "7"
+  "7" [shape=rectangle,xlabel=1];
+  "8" -> "12"
+  "12" [xlabel=3];
+  "12" -> "10"
+  "10" [xlabel=2];
+  "10" -> "9"
+  "9" [shape=rectangle,xlabel=1];
+  "10" -> "11"
+  "11" [shape=rectangle,xlabel=1];
+  "12" -> "14"
+  "14" [xlabel=2];
+  "14" -> "13"
+  "13" [shape=rectangle,xlabel=1];
+  "14" -> "15"
+  "15" [shape=rectangle,xlabel=1];
+}
+#+END_SRC
+
+#+RESULTS:
+[[file:images/avltree2.png]]
+
+** Strings 
+
+#+BEGIN_SRC csharp :tangle demo/teststrings.cs 
+public class TestAVL {
+
+  public static void Main() {
+    var avltree = new AVLTree<string>(); 
+    avltree.Insert("Jamie"); 
+    avltree.Insert("Tywin"); 
+    avltree.Insert("Tyrion"); 
+    avltree.Insert("Myrcella"); 
+    avltree.Insert("Joffrey"); 
+    avltree.Insert("Tomnen"); 
+    avltree.Insert("Cersei"); 
+
+//    var n = avltree.Find("Tywin");
+//    System.Console.WriteLine("Found: " + n.value); 
+
+    avltree.PrintDot(); 
+  }
+}
+#+END_SRC
+
+#+BEGIN_SRC sh :results verbatim :wrap "SRC dot :file images/avltree3.png" :exports both
+mcs demo/teststrings.cs src/avltreeextensions.cs src/avltree.cs
+mono demo/teststrings.exe
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC dot :file images/avltree3.png
+digraph G {
+  forcelabels=true;
+  "Myrcella" [xlabel=3];
+  "Myrcella" -> "Jamie"
+  "Jamie" [xlabel=2];
+  "Jamie" -> "Cersei"
+  "Cersei" [shape=rectangle,xlabel=1];
+  "Jamie" -> "Joffrey"
+  "Joffrey" [shape=rectangle,xlabel=1];
+  "Myrcella" -> "Tyrion"
+  "Tyrion" [xlabel=2];
+  "Tyrion" -> "Tommnen"
+  "Tommnen" [shape=rectangle,xlabel=1];
+  "Tyrion" -> "Tywin"
+  "Tywin" [shape=rectangle,xlabel=1];
+}
+#+END_SRC
+
+#+RESULTS:
+[[file:images/avltree3.png]]
+
+** Random Insertion 
+
+Sibling heights should only differ by 1: 
+
+#+BEGIN_SRC csharp :tangle demo/testrandom.cs 
+using System; 
+using System.Linq; 
+
+public class TestAVL {
+
+  public static void Main() {
+    var avltree = new AVLTree<int>(); 
+    var numbers = Enumerable.Range(1,64).ToList();
+    var random = new Random(); 
+    while (numbers.Count > 0) {  // we need distinct numbers or my print method will fail
+      int nextIndex = random.Next(0, numbers.Count);
+      avltree.Insert(numbers[nextIndex]);
+      numbers.RemoveAt(nextIndex); 
+    }
+    avltree.PrintDot(); 
+  }
+}
+#+END_SRC
+
+#+BEGIN_SRC sh :results verbatim :wrap "SRC dot :file images/avltree4.png" :exports both
+mcs demo/testrandom.cs src/avltreeextensions.cs src/avltree.cs
+mono demo/testrandom.exe
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC dot :file images/avltree4.png
+digraph G {
+  forcelabels=true;
+  "31" [xlabel=7];
+  "31" -> "16"
+  "16" [xlabel=6];
+  "16" -> "7"
+  "7" [xlabel=5];
+  "7" -> "4"
+  "4" [xlabel=3];
+  "4" -> "2"
+  "2" [xlabel=2];
+  "2" -> "1"
+  "1" [shape=rectangle,xlabel=1];
+  "2" -> "3"
+  "3" [shape=rectangle,xlabel=1];
+  "4" -> "6"
+  "6" [xlabel=2];
+  "6" -> "5"
+  "5" [shape=rectangle,xlabel=1];
+  empty0 [label="", style=invis];
+  "6" -> empty0
+  "7" -> "12"
+  "12" [xlabel=4];
+  "12" -> "10"
+  "10" [xlabel=3];
+  "10" -> "9"
+  "9" [xlabel=2];
+  "9" -> "8"
+  "8" [shape=rectangle,xlabel=1];
+  empty1 [label="", style=invis];
+  "9" -> empty1
+  "10" -> "11"
+  "11" [shape=rectangle,xlabel=1];
+  "12" -> "14"
+  "14" [xlabel=2];
+  "14" -> "13"
+  "13" [shape=rectangle,xlabel=1];
+  "14" -> "15"
+  "15" [shape=rectangle,xlabel=1];
+  "16" -> "23"
+  "23" [xlabel=4];
+  "23" -> "20"
+  "20" [xlabel=3];
+  "20" -> "18"
+  "18" [xlabel=2];
+  "18" -> "17"
+  "17" [shape=rectangle,xlabel=1];
+  "18" -> "19"
+  "19" [shape=rectangle,xlabel=1];
+  "20" -> "21"
+  "21" [xlabel=2];
+  empty2 [label="", style=invis];
+  "21" -> empty2
+  "21" -> "22"
+  "22" [shape=rectangle,xlabel=1];
+  "23" -> "27"
+  "27" [xlabel=3];
+  "27" -> "25"
+  "25" [xlabel=2];
+  "25" -> "24"
+  "24" [shape=rectangle,xlabel=1];
+  "25" -> "26"
+  "26" [shape=rectangle,xlabel=1];
+  "27" -> "29"
+  "29" [xlabel=2];
+  "29" -> "28"
+  "28" [shape=rectangle,xlabel=1];
+  "29" -> "30"
+  "30" [shape=rectangle,xlabel=1];
+  "31" -> "46"
+  "46" [xlabel=6];
+  "46" -> "38"
+  "38" [xlabel=4];
+  "38" -> "34"
+  "34" [xlabel=3];
+  "34" -> "33"
+  "33" [xlabel=2];
+  "33" -> "32"
+  "32" [shape=rectangle,xlabel=1];
+  empty3 [label="", style=invis];
+  "33" -> empty3
+  "34" -> "36"
+  "36" [xlabel=2];
+  "36" -> "35"
+  "35" [shape=rectangle,xlabel=1];
+  "36" -> "37"
+  "37" [shape=rectangle,xlabel=1];
+  "38" -> "42"
+  "42" [xlabel=3];
+  "42" -> "40"
+  "40" [xlabel=2];
+  "40" -> "39"
+  "39" [shape=rectangle,xlabel=1];
+  "40" -> "41"
+  "41" [shape=rectangle,xlabel=1];
+  "42" -> "44"
+  "44" [xlabel=2];
+  "44" -> "43"
+  "43" [shape=rectangle,xlabel=1];
+  "44" -> "45"
+  "45" [shape=rectangle,xlabel=1];
+  "46" -> "58"
+  "58" [xlabel=5];
+  "58" -> "52"
+  "52" [xlabel=4];
+  "52" -> "49"
+  "49" [xlabel=3];
+  "49" -> "48"
+  "48" [xlabel=2];
+  "48" -> "47"
+  "47" [shape=rectangle,xlabel=1];
+  empty4 [label="", style=invis];
+  "48" -> empty4
+  "49" -> "51"
+  "51" [xlabel=2];
+  "51" -> "50"
+  "50" [shape=rectangle,xlabel=1];
+  empty5 [label="", style=invis];
+  "51" -> empty5
+  "52" -> "55"
+  "55" [xlabel=3];
+  "55" -> "53"
+  "53" [xlabel=2];
+  empty6 [label="", style=invis];
+  "53" -> empty6
+  "53" -> "54"
+  "54" [shape=rectangle,xlabel=1];
+  "55" -> "56"
+  "56" [xlabel=2];
+  empty7 [label="", style=invis];
+  "56" -> empty7
+  "56" -> "57"
+  "57" [shape=rectangle,xlabel=1];
+  "58" -> "62"
+  "62" [xlabel=3];
+  "62" -> "60"
+  "60" [xlabel=2];
+  "60" -> "59"
+  "59" [shape=rectangle,xlabel=1];
+  "60" -> "61"
+  "61" [shape=rectangle,xlabel=1];
+  "62" -> "64"
+  "64" [xlabel=2];
+  "64" -> "63"
+  "63" [shape=rectangle,xlabel=1];
+  empty8 [label="", style=invis];
+  "64" -> empty8
+}
+#+END_SRC
+
+#+RESULTS:
+[[file:images/avltree4.png]]
