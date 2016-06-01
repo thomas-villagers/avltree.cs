@@ -386,6 +386,37 @@ Sibling heights should only differ by 1:
     mcs demo/testtraverse.cs src/avltreelistextensions.cs src/avltree.cs
     mono demo/testtraverse.exe
 
+    1
+    2
+    3
+    4
+    5
+    6
+    7
+    8
+    9
+    10
+    11
+    12
+    13
+    14
+    15
+    15
+    14
+    13
+    12
+    11
+    10
+    9
+    8
+    7
+    6
+    5
+    4
+    3
+    2
+    1
+
 ## Sort Performance<a id="orgheadline9"></a>
 
     using System; 
@@ -418,3 +449,7 @@ Sibling heights should only differ by 1:
 
     mcs demo/treesort.cs src/avltreelistextensions.cs src/avltree.cs
     mono demo/treesort.exe
+
+    Generating 1000000 random elements...
+    Sorting 1000000 random elements...
+    Insertion: 1171 Removal: 1211 Combined: 2382

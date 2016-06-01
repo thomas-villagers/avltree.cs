@@ -637,7 +637,7 @@ public class TestTraverse {
 }
 #+END_SRC
 
-#+BEGIN_SRC sh :results verbatim
+#+BEGIN_SRC sh :results verbatim :exports both 
 mcs demo/testtraverse.cs src/avltreelistextensions.cs src/avltree.cs
 mono demo/testtraverse.exe
 #+END_SRC
@@ -709,7 +709,7 @@ public class Treesort {
 }
 #+END_SRC
 
-#+BEGIN_SRC sh :results verbatim
+#+BEGIN_SRC sh :results verbatim :exports both 
 mcs demo/treesort.cs src/avltreelistextensions.cs src/avltree.cs
 mono demo/treesort.exe
 #+END_SRC
