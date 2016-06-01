@@ -22,6 +22,6 @@ public class Treesort {
     L = T.ToList(); 
     var elapsedRemove = sw.ElapsedMilliseconds;
     sw.Stop(); 
-    Console.WriteLine("Insertion: {0} Removal: {1} Combined: {2}", elapsedInsert, elapsedRemove, elapsedInsert + elapsedRemove); 
+    Console.WriteLine("Insertion: {0} ToList: {1} Combined: {2}", elapsedInsert, elapsedRemove, elapsedInsert + elapsedRemove); 
   }
 }

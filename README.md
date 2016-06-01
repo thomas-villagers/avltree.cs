@@ -443,7 +443,7 @@ Sibling heights should only differ by 1:
         L = T.ToList(); 
         var elapsedRemove = sw.ElapsedMilliseconds;
         sw.Stop(); 
-        Console.WriteLine("Insertion: {0} Removal: {1} Combined: {2}", elapsedInsert, elapsedRemove, elapsedInsert + elapsedRemove); 
+        Console.WriteLine("Insertion: {0} ToList: {1} Combined: {2}", elapsedInsert, elapsedRemove, elapsedInsert + elapsedRemove); 
       }
     }
 
@@ -452,4 +452,4 @@ Sibling heights should only differ by 1:
 
     Generating 1000000 random elements...
     Sorting 1000000 random elements...
-    Insertion: 1171 Removal: 1211 Combined: 2382
+    Insertion: 1185 ToList: 1225 Combined: 2410
