@@ -681,6 +681,7 @@ mono demo/testtraverse.exe
 
 #+BEGIN_SRC csharp :tangle demo/treesort.cs 
 using System; 
+using System.Linq; 
 using System.Collections.Generic; 
 using System.Diagnostics; 
 
@@ -690,18 +691,16 @@ public class Treesort {
 
     int n = 1000000;
     var random = new Random();
-    var L = new List<int>(n);
-    Console.WriteLine("Generating {0} random elements...", n); 
-    for(int i = 0; i < n; i++)
-      L.Add(random.Next()); 
+    Console.WriteLine("Generating {0} random elements...", n);
+    var numbers = Enumerable.Range(0,n).Select(x => random.Next()); 
 
     var T = new AVLTree<int>();
     Console.WriteLine("Sorting {0} random elements...", n); 
     var sw = Stopwatch.StartNew(); 
-    foreach(var i in L) 
+    foreach(var i in numbers) 
       T.Insert(i); 
     var elapsedInsert = sw.ElapsedMilliseconds;
-    L = T.ToList(); 
+    T.ToList(); 
     var elapsedRemove = sw.ElapsedMilliseconds;
     sw.Stop(); 
     Console.WriteLine("Insertion: {0} ToList: {1} Combined: {2}", elapsedInsert, elapsedRemove, elapsedInsert + elapsedRemove); 
@@ -715,7 +714,8 @@ mono demo/treesort.exe
 #+END_SRC
 
 #+RESULTS:
+: Compilation failed: 1 error(s), 0 warnings
 : Generating 1000000 random elements...
 : Sorting 1000000 random elements...
-: Insertion: 1193 Removal: 1233 Combined: 2426
+: Insertion: 1224 ToList: 1264 Combined: 2488
 
