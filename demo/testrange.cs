@@ -6,6 +6,6 @@ public class TestRange {
       avltree.Insert(i); 
 
     foreach(var i in avltree.Range(2,14))
-      System.Console.WriteLine(i); 
+      System.Console.Write(i + " "); 
   }
 }

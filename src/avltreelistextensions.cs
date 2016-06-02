@@ -54,16 +54,15 @@ static class AVLTreeListExtensions {
   }
 
   private static void RangeQuery<T>(AVLTree<T>.Node node, CollectDelegate<T> collect, QueryDelegate<T> traverseLeft, QueryDelegate<T> traverseRight) { 
-    if (traverseLeft(node.value) > 0 && traverseRight(node.value) > 0) {
-      if (node.left != null)  RangeQuery(node.left, collect, traverseLeft, traverseRight);
+    int cmpLeft = traverseLeft(node.value);
+    if (cmpLeft > 0 &&  node.left != null) 
+      RangeQuery(node.left, collect, traverseLeft, traverseRight);
+    
+    int cmpRight = traverseRight(node.value); 
+    if (cmpLeft > 0 && cmpRight > 0) 
       collect(node.value);
-      if (node.right != null)  RangeQuery(node.right, collect, traverseLeft, traverseRight);
-    }
-    else if (traverseLeft(node.value) > 0) {
-      if (node.left != null)  RangeQuery(node.left, collect, traverseLeft, traverseRight);
-    }
-    else if (traverseRight(node.value) > 0) {
-      if (node.right != null)  RangeQuery(node.right, collect, traverseLeft, traverseRight);
-    }
+    
+    if (cmpRight > 0 && node.right != null)  
+      RangeQuery(node.right, collect, traverseLeft, traverseRight);
   }
 }

@@ -227,17 +227,16 @@
       }
     
       private static void RangeQuery<T>(AVLTree<T>.Node node, CollectDelegate<T> collect, QueryDelegate<T> traverseLeft, QueryDelegate<T> traverseRight) { 
-        if (traverseLeft(node.value) > 0 && traverseRight(node.value) > 0) {
-          if (node.left != null)  RangeQuery(node.left, collect, traverseLeft, traverseRight);
+        int cmpLeft = traverseLeft(node.value);
+        if (cmpLeft > 0 &&  node.left != null) 
+          RangeQuery(node.left, collect, traverseLeft, traverseRight);
+    
+        int cmpRight = traverseRight(node.value); 
+        if (cmpLeft > 0 && cmpRight > 0) 
           collect(node.value);
-          if (node.right != null)  RangeQuery(node.right, collect, traverseLeft, traverseRight);
-        }
-        else if (traverseLeft(node.value) > 0) {
-          if (node.left != null)  RangeQuery(node.left, collect, traverseLeft, traverseRight);
-        }
-        else if (traverseRight(node.value) > 0) {
-          if (node.right != null)  RangeQuery(node.right, collect, traverseLeft, traverseRight);
-        }
+    
+        if (cmpRight > 0 && node.right != null)  
+          RangeQuery(node.right, collect, traverseLeft, traverseRight);
       }
     }
 
@@ -405,11 +404,13 @@ Sibling heights should only differ by 1:
           avltree.Insert(i); 
     
         foreach(var i in avltree.ToList())
-          System.Console.WriteLine(i); 
+          System.Console.Write(i + " "); 
+        System.Console.WriteLine();
         foreach(var i in avltree.ToList(avltree.Postorder()))
-          System.Console.WriteLine(i); 
+          System.Console.Write(i + " "); 
+        System.Console.WriteLine();
         foreach(var i in avltree.ToList(avltree.Inorder()))
-          System.Console.WriteLine(i); 
+          System.Console.Write(i + " "); 
     
       }
     }
@@ -417,51 +418,9 @@ Sibling heights should only differ by 1:
     mcs demo/testtraverse.cs src/avltreelistextensions.cs src/avltree.cs
     mono demo/testtraverse.exe
 
-    1
-    2
-    3
-    4
-    5
-    6
-    7
-    8
-    9
-    10
-    11
-    12
-    13
-    14
-    15
-    15
-    14
-    13
-    12
-    11
-    10
-    9
-    8
-    7
-    6
-    5
-    4
-    3
-    2
-    1
-    8
-    4
-    2
-    1
-    3
-    6
-    5
-    7
-    12
-    10
-    9
-    11
-    14
-    13
-    15
+    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 
+    15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 
+    8 4 2 1 3 6 5 7 12 10 9 11 14 13 15
 
 ## Sort Performance<a id="orgheadline9"></a>
 
@@ -497,7 +456,7 @@ Sibling heights should only differ by 1:
 
     Generating 1000000 random elements...
     Sorting 1000000 random elements...
-    Insertion: 1141 ToList: 1242 Combined: 2383
+    Insertion: 1116 ToList: 1216 Combined: 2332
 
 ## Range Queries<a id="orgheadline10"></a>
 
@@ -509,21 +468,11 @@ Sibling heights should only differ by 1:
           avltree.Insert(i); 
     
         foreach(var i in avltree.Range(2,14))
-          System.Console.WriteLine(i); 
+          System.Console.Write(i + " "); 
       }
     }
 
     mcs demo/testrange.cs src/avltreelistextensions.cs src/avltree.cs
     mono demo/testrange.exe
 
-    3
-    4
-    5
-    6
-    7
-    8
-    9
-    10
-    11
-    12
-    13
+    3 4 5 6 7 8 9 10 11 12 13

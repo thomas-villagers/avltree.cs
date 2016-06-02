@@ -6,11 +6,13 @@ public class TestTraverse {
       avltree.Insert(i); 
 
     foreach(var i in avltree.ToList())
-      System.Console.WriteLine(i); 
+      System.Console.Write(i + " "); 
+    System.Console.WriteLine();
     foreach(var i in avltree.ToList(avltree.Postorder()))
-      System.Console.WriteLine(i); 
+      System.Console.Write(i + " "); 
+    System.Console.WriteLine();
     foreach(var i in avltree.ToList(avltree.Inorder()))
-      System.Console.WriteLine(i); 
+      System.Console.Write(i + " "); 
 
   }
 }
