@@ -182,7 +182,7 @@
     
       public static List<T> ToList<T>(this AVLTree<T> tree, TraversalDelegate<T> traversalmethod) {
         var list = new List<T>(tree.Count);
-        traversalmethod(tree.root, x => list.Add(x));
+        tree.Map(traversalmethod, x => list.Add(x));
         return list;
       }
     
@@ -194,6 +194,10 @@
         var list = new List<T>();
         RangeQuery(tree.root, x => list.Add(x), x => tree.compare(x,minValue), x => tree.compare(maxValue, x));
         return list; 
+      }
+    
+      public static void Map<T>(this AVLTree<T> tree, TraversalDelegate<T> traversalmethod, CollectDelegate<T> collect) {
+        traversalmethod(tree.root, collect);
       }
     
       public static TraversalDelegate<T> Preorder<T>(this AVLTree<T> tree) {
@@ -396,6 +400,9 @@ Sibling heights should only differ by 1:
 
 ## Traversal<a id="orgheadline8"></a>
 
+    using System; 
+    using System.Collections.Generic; 
+    
     public class TestTraverse {
     
       public static void Main() {
@@ -404,14 +411,19 @@ Sibling heights should only differ by 1:
           avltree.Insert(i); 
     
         foreach(var i in avltree.ToList())
-          System.Console.Write(i + " "); 
-        System.Console.WriteLine();
+          Console.Write(i + " "); 
+        Console.WriteLine();
         foreach(var i in avltree.ToList(avltree.Postorder()))
-          System.Console.Write(i + " "); 
-        System.Console.WriteLine();
+          Console.Write(i + " "); 
+        Console.WriteLine();
         foreach(var i in avltree.ToList(avltree.Inorder()))
-          System.Console.Write(i + " "); 
+          Console.Write(i + " "); 
     
+        Console.WriteLine();
+        var doubles = new List<int>();
+        avltree.Map(avltree.Preorder(), x => doubles.Add(2*x));
+        foreach(var i in doubles)
+          Console.Write(i + " ");
       }
     }
 
@@ -420,7 +432,8 @@ Sibling heights should only differ by 1:
 
     1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 
     15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 
-    8 4 2 1 3 6 5 7 12 10 9 11 14 13 15
+    8 4 2 1 3 6 5 7 12 10 9 11 14 13 15 
+    2 4 6 8 10 12 14 16 18 20 22 24 26 28 30
 
 ## Sort Performance<a id="orgheadline9"></a>
 
@@ -456,7 +469,7 @@ Sibling heights should only differ by 1:
 
     Generating 1000000 random elements...
     Sorting 1000000 random elements...
-    Insertion: 1116 ToList: 1216 Combined: 2332
+    Insertion: 1180 ToList: 1284 Combined: 2464
 
 ## Range Queries<a id="orgheadline10"></a>
 

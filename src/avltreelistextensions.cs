@@ -9,7 +9,7 @@ static class AVLTreeListExtensions {
 
   public static List<T> ToList<T>(this AVLTree<T> tree, TraversalDelegate<T> traversalmethod) {
     var list = new List<T>(tree.Count);
-    traversalmethod(tree.root, x => list.Add(x));
+    tree.Map(traversalmethod, x => list.Add(x));
     return list;
   }
 
@@ -21,6 +21,10 @@ static class AVLTreeListExtensions {
     var list = new List<T>();
     RangeQuery(tree.root, x => list.Add(x), x => tree.compare(x,minValue), x => tree.compare(maxValue, x));
     return list; 
+  }
+
+  public static void Map<T>(this AVLTree<T> tree, TraversalDelegate<T> traversalmethod, CollectDelegate<T> collect) {
+    traversalmethod(tree.root, collect);
   }
 
   public static TraversalDelegate<T> Preorder<T>(this AVLTree<T> tree) {

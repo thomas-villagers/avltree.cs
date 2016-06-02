@@ -1,3 +1,6 @@
+using System; 
+using System.Collections.Generic; 
+
 public class TestTraverse {
 
   public static void Main() {
@@ -6,13 +9,18 @@ public class TestTraverse {
       avltree.Insert(i); 
 
     foreach(var i in avltree.ToList())
-      System.Console.Write(i + " "); 
-    System.Console.WriteLine();
+      Console.Write(i + " "); 
+    Console.WriteLine();
     foreach(var i in avltree.ToList(avltree.Postorder()))
-      System.Console.Write(i + " "); 
-    System.Console.WriteLine();
+      Console.Write(i + " "); 
+    Console.WriteLine();
     foreach(var i in avltree.ToList(avltree.Inorder()))
-      System.Console.Write(i + " "); 
+      Console.Write(i + " "); 
 
+    Console.WriteLine();
+    var doubles = new List<int>();
+    avltree.Map(avltree.Preorder(), x => doubles.Add(2*x));
+    foreach(var i in doubles)
+      Console.Write(i + " ");
   }
 }
