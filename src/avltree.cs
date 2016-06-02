@@ -5,7 +5,7 @@ public class AVLTree<T> {
 
   public Node root;
   int numElements;
-  Func<T, T, int> compare; 
+  public Func<T, T, int> compare; 
 
   public int Count {
     get { return numElements; }
@@ -70,9 +70,11 @@ public class AVLTree<T> {
     private Node Rebalance() {
       Node v = this;
       Node newRoot = this; 
+      bool restructured = false; 
       while (v != null) {
-        if (Math.Abs(ChildHeight(v.left) - ChildHeight(v.right)) > 1) {
+        if (!restructured && Math.Abs(ChildHeight(v.left) - ChildHeight(v.right)) > 1) {
           v = Restructure(v);
+          restructured = true; 
         }
         v.height = 1 + v.MaxChildHeight();    
         newRoot = v;

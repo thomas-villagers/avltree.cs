@@ -10,7 +10,7 @@
 
     public Node root;
     int numElements;
-    Func<T, T, int> compare; 
+    public Func<T, T, int> compare; 
   
     public int Count {
       get { return numElements; }
@@ -75,9 +75,11 @@
       private Node Rebalance() {
         Node v = this;
         Node newRoot = this; 
+	bool restructured = false; 
         while (v != null) {
-          if (Math.Abs(ChildHeight(v.left) - ChildHeight(v.right)) > 1) {
+          if (!restructured && Math.Abs(ChildHeight(v.left) - ChildHeight(v.right)) > 1) {
             v = Restructure(v);
+	    restructured = true; 
           }
           v.height = 1 + v.MaxChildHeight();    
           newRoot = v;
@@ -148,56 +150,79 @@
 - Insertion :: O(log n)
 - Find :: O(log n)
 
-* ToList Extension 
+* ToList Extensions 
 
 #+BEGIN_SRC csharp :tangle src/avltreelistextensions.cs
-using System; 
-using System.Collections.Generic; 
+  using System; 
+  using System.Collections.Generic; 
 
-static class AVLTreeListExtensions {
+  static class AVLTreeListExtensions {
 
-  public delegate void TraversalDelegate<T>(AVLTree<T>.Node tree, List<T> list); 
+    public delegate void TraversalDelegate<T>(AVLTree<T>.Node node, CollectDelegate<T> collect); 
+    public delegate void CollectDelegate<T>(T value); 
+    public delegate int QueryDelegate<T>(T value);
 
-  private static void TraversePreorder<T>(AVLTree<T>.Node tree, List<T> list) {
-    if (tree.left != null) TraversePreorder(tree.left, list);
-    list.Add(tree.value);
-    if (tree.right != null) TraversePreorder(tree.right, list); 
+    private static void TraversePreorder<T>(AVLTree<T>.Node node, CollectDelegate<T> collect) {
+      if (node.left != null) TraversePreorder(node.left, collect);
+      collect(node.value); 
+      if (node.right != null) TraversePreorder(node.right, collect); 
+    }
+
+    private static void TraversePostorder<T>(AVLTree<T>.Node node,  CollectDelegate<T> collect) {
+      if (node.right != null) TraversePostorder(node.right, collect); 
+      collect(node.value);
+      if (node.left != null) TraversePostorder(node.left, collect);
+    }
+
+    private static void TraverseInorder<T>(AVLTree<T>.Node node, CollectDelegate<T> collect) {
+      collect(node.value);
+      if (node.left != null) TraverseInorder(node.left, collect);
+      if (node.right != null) TraverseInorder(node.right, collect); 
+    }
+
+    public static TraversalDelegate<T> Preorder<T>(this AVLTree<T> tree) {
+      return TraversePreorder<T>; 
+    }
+
+    public static TraversalDelegate<T> Postorder<T>(this AVLTree<T> tree) {
+      return TraversePostorder<T>; 
+    }
+
+    public static TraversalDelegate<T> Inorder<T>(this AVLTree<T> tree) {
+      return TraverseInorder<T>; 
+    }
+
+    public static List<T> ToList<T>(this AVLTree<T> tree, TraversalDelegate<T> traversalmethod) {
+      var list = new List<T>(tree.Count);
+      traversalmethod(tree.root, x => list.Add(x));
+      return list;
+    }
+
+    public static List<T> ToList<T>(this AVLTree<T> tree) {
+      return tree.ToList<T>(TraversePreorder<T>);
+    }
+
+    private static void RangeQuery<T>(AVLTree<T>.Node node, CollectDelegate<T> collect, QueryDelegate<T> traverseLeft, QueryDelegate<T> traverseRight) { 
+      if (traverseLeft(node.value) > 0 && traverseRight(node.value) > 0) {
+        if (node.left != null)  RangeQuery(node.left, collect, traverseLeft, traverseRight);
+	collect(node.value);
+	if (node.right != null)  RangeQuery(node.right, collect, traverseLeft, traverseRight);
+      }
+      else if (traverseLeft(node.value) > 0) {
+        if (node.left != null)  RangeQuery(node.left, collect, traverseLeft, traverseRight);
+      }
+      else if (traverseRight(node.value) > 0) {
+        if (node.right != null)  RangeQuery(node.right, collect, traverseLeft, traverseRight);
+      }
+    }
+
+    public static List<T> Range<T>(this AVLTree<T> tree, T minValue, T maxValue) {
+      var list = new List<T>();
+      RangeQuery(tree.root, x => list.Add(x), x => tree.compare(x,minValue), x => tree.compare(maxValue, x));
+      return list; 
+    }
+
   }
-
-  private static void TraversePostorder<T>(AVLTree<T>.Node tree, List<T> list) {
-    if (tree.right != null) TraversePostorder(tree.right, list); 
-    list.Add(tree.value);
-    if (tree.left != null) TraversePostorder(tree.left, list);
-  }
-
-  private static void TraverseInorder<T>(AVLTree<T>.Node tree, List<T> list) {
-    list.Add(tree.value);
-    if (tree.right != null) TraverseInorder(tree.right, list); 
-    if (tree.left != null) TraverseInorder(tree.left, list);
-  }
-
-  public static TraversalDelegate<T> Postorder<T>(this AVLTree<T> tree) {
-    return TraversePostorder<T>; 
-  }
-
-  public static TraversalDelegate<T> Preorder<T>(this AVLTree<T> tree) {
-    return TraversePreorder<T>; 
-  }
-
-  public static TraversalDelegate<T> Inorder<T>(this AVLTree<T> tree) {
-    return TraverseInorder<T>; 
-  }
-
-  public static List<T> ToList<T>(this AVLTree<T> tree, TraversalDelegate<T> traversalmethod) {
-    var list = new List<T>();
-    traversalmethod(tree.root, list);
-    return list;
-  }
-
-  public static List<T> ToList<T>(this AVLTree<T> tree) {
-    return tree.ToList<T>(TraversePreorder<T>);
-  }
-}
 #+END_SRC
 
 * Graphviz Output 
@@ -467,12 +492,10 @@ mono demo/testrandom.exe
 #+BEGIN_SRC dot :file images/avltree4.png
 digraph G {
   forcelabels=true;
-  "31" [xlabel=7];
-  "31" -> "16"
-  "16" [xlabel=6];
-  "16" -> "7"
-  "7" [xlabel=5];
-  "7" -> "4"
+  "18" [xlabel=7];
+  "18" -> "8"
+  "8" [xlabel=5];
+  "8" -> "4"
   "4" [xlabel=3];
   "4" -> "2"
   "2" [xlabel=2];
@@ -484,134 +507,132 @@ digraph G {
   "6" [xlabel=2];
   "6" -> "5"
   "5" [shape=rectangle,xlabel=1];
-  empty0 [label="", style=invis];
-  "6" -> empty0
-  "7" -> "12"
-  "12" [xlabel=4];
+  "6" -> "7"
+  "7" [shape=rectangle,xlabel=1];
+  "8" -> "14"
+  "14" [xlabel=4];
+  "14" -> "12"
+  "12" [xlabel=3];
   "12" -> "10"
-  "10" [xlabel=3];
+  "10" [xlabel=2];
   "10" -> "9"
-  "9" [xlabel=2];
-  "9" -> "8"
-  "8" [shape=rectangle,xlabel=1];
-  empty1 [label="", style=invis];
-  "9" -> empty1
+  "9" [shape=rectangle,xlabel=1];
   "10" -> "11"
   "11" [shape=rectangle,xlabel=1];
-  "12" -> "14"
-  "14" [xlabel=2];
-  "14" -> "13"
+  "12" -> "13"
   "13" [shape=rectangle,xlabel=1];
-  "14" -> "15"
+  "14" -> "16"
+  "16" [xlabel=2];
+  "16" -> "15"
   "15" [shape=rectangle,xlabel=1];
-  "16" -> "23"
-  "23" [xlabel=4];
-  "23" -> "20"
-  "20" [xlabel=3];
-  "20" -> "18"
-  "18" [xlabel=2];
-  "18" -> "17"
+  "16" -> "17"
   "17" [shape=rectangle,xlabel=1];
-  "18" -> "19"
+  "18" -> "40"
+  "40" [xlabel=6];
+  "40" -> "30"
+  "30" [xlabel=5];
+  "30" -> "25"
+  "25" [xlabel=4];
+  "25" -> "22"
+  "22" [xlabel=3];
+  "22" -> "20"
+  "20" [xlabel=2];
+  "20" -> "19"
   "19" [shape=rectangle,xlabel=1];
   "20" -> "21"
-  "21" [xlabel=2];
-  empty2 [label="", style=invis];
-  "21" -> empty2
-  "21" -> "22"
-  "22" [shape=rectangle,xlabel=1];
-  "23" -> "27"
-  "27" [xlabel=3];
-  "27" -> "25"
-  "25" [xlabel=2];
-  "25" -> "24"
+  "21" [shape=rectangle,xlabel=1];
+  "22" -> "23"
+  "23" [xlabel=2];
+  empty0 [label="", style=invis];
+  "23" -> empty0
+  "23" -> "24"
   "24" [shape=rectangle,xlabel=1];
-  "25" -> "26"
+  "25" -> "27"
+  "27" [xlabel=3];
+  "27" -> "26"
   "26" [shape=rectangle,xlabel=1];
-  "27" -> "29"
-  "29" [xlabel=2];
-  "29" -> "28"
-  "28" [shape=rectangle,xlabel=1];
-  "29" -> "30"
-  "30" [shape=rectangle,xlabel=1];
-  "31" -> "46"
-  "46" [xlabel=6];
-  "46" -> "38"
-  "38" [xlabel=4];
-  "38" -> "34"
+  "27" -> "28"
+  "28" [xlabel=2];
+  empty1 [label="", style=invis];
+  "28" -> empty1
+  "28" -> "29"
+  "29" [shape=rectangle,xlabel=1];
+  "30" -> "37"
+  "37" [xlabel=4];
+  "37" -> "34"
   "34" [xlabel=3];
-  "34" -> "33"
-  "33" [xlabel=2];
-  "33" -> "32"
-  "32" [shape=rectangle,xlabel=1];
-  empty3 [label="", style=invis];
-  "33" -> empty3
+  "34" -> "32"
+  "32" [xlabel=2];
+  "32" -> "31"
+  "31" [shape=rectangle,xlabel=1];
+  "32" -> "33"
+  "33" [shape=rectangle,xlabel=1];
   "34" -> "36"
   "36" [xlabel=2];
   "36" -> "35"
   "35" [shape=rectangle,xlabel=1];
-  "36" -> "37"
-  "37" [shape=rectangle,xlabel=1];
-  "38" -> "42"
-  "42" [xlabel=3];
-  "42" -> "40"
-  "40" [xlabel=2];
-  "40" -> "39"
+  empty2 [label="", style=invis];
+  "36" -> empty2
+  "37" -> "38"
+  "38" [xlabel=2];
+  empty3 [label="", style=invis];
+  "38" -> empty3
+  "38" -> "39"
   "39" [shape=rectangle,xlabel=1];
-  "40" -> "41"
-  "41" [shape=rectangle,xlabel=1];
-  "42" -> "44"
-  "44" [xlabel=2];
-  "44" -> "43"
-  "43" [shape=rectangle,xlabel=1];
-  "44" -> "45"
-  "45" [shape=rectangle,xlabel=1];
-  "46" -> "58"
-  "58" [xlabel=5];
-  "58" -> "52"
-  "52" [xlabel=4];
-  "52" -> "49"
-  "49" [xlabel=3];
-  "49" -> "48"
-  "48" [xlabel=2];
-  "48" -> "47"
-  "47" [shape=rectangle,xlabel=1];
+  "40" -> "54"
+  "54" [xlabel=5];
+  "54" -> "47"
+  "47" [xlabel=4];
+  "47" -> "43"
+  "43" [xlabel=3];
+  "43" -> "41"
+  "41" [xlabel=2];
   empty4 [label="", style=invis];
-  "48" -> empty4
-  "49" -> "51"
-  "51" [xlabel=2];
-  "51" -> "50"
+  "41" -> empty4
+  "41" -> "42"
+  "42" [shape=rectangle,xlabel=1];
+  "43" -> "45"
+  "45" [xlabel=2];
+  "45" -> "44"
+  "44" [shape=rectangle,xlabel=1];
+  "45" -> "46"
+  "46" [shape=rectangle,xlabel=1];
+  "47" -> "51"
+  "51" [xlabel=3];
+  "51" -> "49"
+  "49" [xlabel=2];
+  "49" -> "48"
+  "48" [shape=rectangle,xlabel=1];
+  "49" -> "50"
   "50" [shape=rectangle,xlabel=1];
+  "51" -> "52"
+  "52" [xlabel=2];
   empty5 [label="", style=invis];
-  "51" -> empty5
-  "52" -> "55"
-  "55" [xlabel=3];
-  "55" -> "53"
-  "53" [xlabel=2];
-  empty6 [label="", style=invis];
-  "53" -> empty6
-  "53" -> "54"
-  "54" [shape=rectangle,xlabel=1];
-  "55" -> "56"
+  "52" -> empty5
+  "52" -> "53"
+  "53" [shape=rectangle,xlabel=1];
+  "54" -> "61"
+  "61" [xlabel=4];
+  "61" -> "58"
+  "58" [xlabel=3];
+  "58" -> "56"
   "56" [xlabel=2];
-  empty7 [label="", style=invis];
-  "56" -> empty7
+  "56" -> "55"
+  "55" [shape=rectangle,xlabel=1];
   "56" -> "57"
   "57" [shape=rectangle,xlabel=1];
-  "58" -> "62"
-  "62" [xlabel=3];
-  "62" -> "60"
-  "60" [xlabel=2];
-  "60" -> "59"
-  "59" [shape=rectangle,xlabel=1];
-  "60" -> "61"
-  "61" [shape=rectangle,xlabel=1];
-  "62" -> "64"
-  "64" [xlabel=2];
-  "64" -> "63"
-  "63" [shape=rectangle,xlabel=1];
-  empty8 [label="", style=invis];
-  "64" -> empty8
+  "58" -> "59"
+  "59" [xlabel=2];
+  empty6 [label="", style=invis];
+  "59" -> empty6
+  "59" -> "60"
+  "60" [shape=rectangle,xlabel=1];
+  "61" -> "63"
+  "63" [xlabel=2];
+  "63" -> "62"
+  "62" [shape=rectangle,xlabel=1];
+  "63" -> "64"
+  "64" [shape=rectangle,xlabel=1];
 }
 #+END_SRC
 
@@ -631,6 +652,8 @@ public class TestTraverse {
     foreach(var i in avltree.ToList())
       System.Console.WriteLine(i); 
     foreach(var i in avltree.ToList(avltree.Postorder()))
+      System.Console.WriteLine(i); 
+    foreach(var i in avltree.ToList(avltree.Inorder()))
       System.Console.WriteLine(i); 
 
   }
@@ -714,8 +737,28 @@ mono demo/treesort.exe
 #+END_SRC
 
 #+RESULTS:
-: Compilation failed: 1 error(s), 0 warnings
 : Generating 1000000 random elements...
 : Sorting 1000000 random elements...
-: Insertion: 1224 ToList: 1264 Combined: 2488
+: Insertion: 1180 ToList: 1277 Combined: 2457
 
+
+** Range Queries 
+
+#+BEGIN_SRC csharp :tangle demo/testrange.cs 
+public class TestRange {
+
+  public static void Main() {
+    var avltree = new AVLTree<int>(); 
+    for(int i = 15; i > 0; i--)
+      avltree.Insert(i); 
+
+    foreach(var i in avltree.Range(2,14))
+      System.Console.WriteLine(i); 
+  }
+}
+#+END_SRC
+
+#+BEGIN_SRC sh :results verbatim :exports both 
+mcs demo/testrange.cs src/avltreelistextensions.cs src/avltree.cs
+mono demo/testrange.exe
+#+END_SRC

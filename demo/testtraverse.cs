@@ -9,6 +9,8 @@ public class TestTraverse {
       System.Console.WriteLine(i); 
     foreach(var i in avltree.ToList(avltree.Postorder()))
       System.Console.WriteLine(i); 
+    foreach(var i in avltree.ToList(avltree.Inorder()))
+      System.Console.WriteLine(i); 
 
   }
 }
