@@ -147,8 +147,8 @@
   }
 #+END_SRC
 
-- Insertion :: O(log n)
-- Find :: O(log n)
+- =Insert= :: O(log n)
+- =Find= :: O(log n)
 
 * ToList Extensions 
 
@@ -174,12 +174,16 @@
 
     public static List<T> Range<T>(this AVLTree<T> tree, T minValue, T maxValue) {
       var list = new List<T>();
-      RangeQuery(tree.root, x => list.Add(x), x => tree.compare(x,minValue), x => tree.compare(maxValue, x));
+      tree.MapRange(minValue, maxValue, x => list.Add(x));
       return list; 
     }
 
     public static void Map<T>(this AVLTree<T> tree, TraversalDelegate<T> traversalmethod, CollectDelegate<T> collect) {
       traversalmethod(tree.root, collect);
+    }
+
+    public static void MapRange<T>(this AVLTree<T> tree, T minValue, T maxValue, CollectDelegate<T> collect) {
+      RangeQuery(tree.root, collect, x => tree.compare(x,minValue), x => tree.compare(maxValue, x));
     }
 
     public static TraversalDelegate<T> Preorder<T>(this AVLTree<T> tree) {
@@ -685,7 +689,7 @@ mono demo/testtraverse.exe
 : 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 
 : 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 
 : 8 4 2 1 3 6 5 7 12 10 9 11 14 13 15 
-: 16 8 4 2 6 12 10 14 24 20 18 22 28 26 30 
+: 2 4 6 8 10 12 14 16 18 20 22 24 26 28 30 
 
 
 ** Sort Performance 
@@ -733,6 +737,9 @@ mono demo/treesort.exe
 ** Range Queries 
 
 #+BEGIN_SRC csharp :tangle demo/testrange.cs 
+using System;
+using System.Collections.Generic; 
+
 public class TestRange {
 
   public static void Main() {
@@ -741,7 +748,13 @@ public class TestRange {
       avltree.Insert(i); 
 
     foreach(var i in avltree.Range(2,14))
-      System.Console.Write(i + " "); 
+      Console.Write(i + " "); 
+    Console.WriteLine();
+    
+    var doubles = new List<int>();
+    avltree.MapRange(2,14, x => doubles.Add(2*x));
+    foreach (var i in doubles)
+      Console.Write(i + " ");
   }
 }
 #+END_SRC
@@ -753,4 +766,5 @@ mono demo/testrange.exe
 
 #+RESULTS:
 : 3 4 5 6 7 8 9 10 11 12 13 
+: 6 8 10 12 14 16 18 20 22 24 26 
 

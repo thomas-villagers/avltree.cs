@@ -166,8 +166,8 @@
       }  
     }
 
--   **Insertion:** O(log n)
--   **Find:** O(log n)
+-   **`Insert`:** O(log n)
+-   **`Find`:** O(log n)
 
 # ToList Extensions<a id="orgheadline2"></a>
 
@@ -192,12 +192,16 @@
     
       public static List<T> Range<T>(this AVLTree<T> tree, T minValue, T maxValue) {
         var list = new List<T>();
-        RangeQuery(tree.root, x => list.Add(x), x => tree.compare(x,minValue), x => tree.compare(maxValue, x));
+        tree.MapRange(minValue, maxValue, x => list.Add(x));
         return list; 
       }
     
       public static void Map<T>(this AVLTree<T> tree, TraversalDelegate<T> traversalmethod, CollectDelegate<T> collect) {
         traversalmethod(tree.root, collect);
+      }
+    
+      public static void MapRange<T>(this AVLTree<T> tree, T minValue, T maxValue, CollectDelegate<T> collect) {
+        RangeQuery(tree.root, collect, x => tree.compare(x,minValue), x => tree.compare(maxValue, x));
       }
     
       public static TraversalDelegate<T> Preorder<T>(this AVLTree<T> tree) {
@@ -469,10 +473,13 @@ Sibling heights should only differ by 1:
 
     Generating 1000000 random elements...
     Sorting 1000000 random elements...
-    Insertion: 1180 ToList: 1284 Combined: 2464
+    Insertion: 1133 ToList: 1236 Combined: 2369
 
 ## Range Queries<a id="orgheadline10"></a>
 
+    using System;
+    using System.Collections.Generic; 
+    
     public class TestRange {
     
       public static void Main() {
@@ -481,11 +488,18 @@ Sibling heights should only differ by 1:
           avltree.Insert(i); 
     
         foreach(var i in avltree.Range(2,14))
-          System.Console.Write(i + " "); 
+          Console.Write(i + " "); 
+        Console.WriteLine();
+    
+        var doubles = new List<int>();
+        avltree.MapRange(2,14, x => doubles.Add(2*x));
+        foreach (var i in doubles)
+          Console.Write(i + " ");
       }
     }
 
     mcs demo/testrange.cs src/avltreelistextensions.cs src/avltree.cs
     mono demo/testrange.exe
 
-    3 4 5 6 7 8 9 10 11 12 13
+    3 4 5 6 7 8 9 10 11 12 13 
+    6 8 10 12 14 16 18 20 22 24 26

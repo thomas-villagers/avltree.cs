@@ -19,12 +19,16 @@ static class AVLTreeListExtensions {
 
   public static List<T> Range<T>(this AVLTree<T> tree, T minValue, T maxValue) {
     var list = new List<T>();
-    RangeQuery(tree.root, x => list.Add(x), x => tree.compare(x,minValue), x => tree.compare(maxValue, x));
+    tree.MapRange(minValue, maxValue, x => list.Add(x));
     return list; 
   }
 
   public static void Map<T>(this AVLTree<T> tree, TraversalDelegate<T> traversalmethod, CollectDelegate<T> collect) {
     traversalmethod(tree.root, collect);
+  }
+
+  public static void MapRange<T>(this AVLTree<T> tree, T minValue, T maxValue, CollectDelegate<T> collect) {
+    RangeQuery(tree.root, collect, x => tree.compare(x,minValue), x => tree.compare(maxValue, x));
   }
 
   public static TraversalDelegate<T> Preorder<T>(this AVLTree<T> tree) {
