@@ -5,20 +5,22 @@ public class AVLTree<T> {
 
   public Node root;
   int numElements;
-  public Func<T, T, int> compare; 
+  public delegate int CompareDelegate(T v1, T v2); 
+  public readonly CompareDelegate compare = Comparer<T>.Default.Compare; 
 
   public int Count {
     get { return numElements; }
   }
 
-  public AVLTree(Func<T, T, int> compare) {
-    this.compare = compare; 
+  public AVLTree() {
     root = null;
     numElements = 0; 
   }
 
-  public AVLTree() : this((x,y) => Comparer<T>.Default.Compare(x,y)) { }
-
+  public AVLTree(CompareDelegate compare) : this() {
+    this.compare = compare; 
+  }
+  
   public void Insert(T value) {
     numElements++; 
     root = (root == null) ? new Node(value, null) : root.Insert(value, compare); 
@@ -27,14 +29,14 @@ public class AVLTree<T> {
   public Node Find(T value) {
     return root.Find(value, compare);
   }
-
+  
   public class Node {
     public readonly T value;
     Node parent;
     public Node left;
     public Node right;
     public int height;
-  
+
     public Node(T value, Node parent) {
       this.value = value;
       this.parent = parent;
@@ -43,7 +45,7 @@ public class AVLTree<T> {
       height = 1;
     }
 
-    public Node Insert(T value, Func<T, T, int> compare) {
+    public Node Insert(T value, CompareDelegate compare) {
       if (compare(value, this.value) < 0) {
         return Insert(ref left, value, compare); 
       } else {
@@ -51,7 +53,7 @@ public class AVLTree<T> {
       }
     }
 
-    private Node Insert(ref Node node, T value, Func<T, T, int> compare) {
+    private Node Insert(ref Node node, T value, CompareDelegate compare) {
       if (node == null) {
         node = new Node(value, this); 
         return node.Rebalance(); 
@@ -60,7 +62,7 @@ public class AVLTree<T> {
         return node.Insert(value, compare);
     }    
 
-    public Node Find(T value, Func<T, T, int> compare) {
+    public Node Find(T value, CompareDelegate compare) {
       int cmp = compare(this.value, value);
       if (cmp == 0) return this;
       if (cmp > 0) return left.Find(value,compare);
@@ -90,11 +92,11 @@ public class AVLTree<T> {
     private int MaxChildHeight() {
       return Math.Max(ChildHeight(left), ChildHeight(right)); 
     }
-  
+
     private Node ChildWithMaxHeight() {
       return (ChildHeight(left) > ChildHeight(right)) ? left : right;
     }    
-  
+
     private Node Restructure(Node z) {
       var y = z.ChildWithMaxHeight();
       var x = y.ChildWithMaxHeight();
@@ -123,12 +125,12 @@ public class AVLTree<T> {
         else z.parent.right = b; 
       }
       b.parent = z.parent; 
-    
+  
       b.left = a;
       a.parent = b;
       b.right = c;
       c.parent = b;
-    
+  
       a.right = T1;
       if (T1 != null) T1.parent = a; 
       c.left = T2;

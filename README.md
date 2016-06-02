@@ -30,19 +30,21 @@
     
       public Node root;
       int numElements;
-      public Func<T, T, int> compare; 
+      public delegate int CompareDelegate(T v1, T v2); 
+      public readonly CompareDelegate compare = Comparer<T>.Default.Compare; 
     
       public int Count {
         get { return numElements; }
       }
     
-      public AVLTree(Func<T, T, int> compare) {
-        this.compare = compare; 
+      public AVLTree() {
         root = null;
         numElements = 0; 
       }
     
-      public AVLTree() : this((x,y) => Comparer<T>.Default.Compare(x,y)) { }
+      public AVLTree(CompareDelegate compare) : this() {
+        this.compare = compare; 
+      }
     
       public void Insert(T value) {
         numElements++; 
@@ -68,7 +70,7 @@
           height = 1;
         }
     
-        public Node Insert(T value, Func<T, T, int> compare) {
+        public Node Insert(T value, CompareDelegate compare) {
           if (compare(value, this.value) < 0) {
             return Insert(ref left, value, compare); 
           } else {
@@ -76,7 +78,7 @@
           }
         }
     
-        private Node Insert(ref Node node, T value, Func<T, T, int> compare) {
+        private Node Insert(ref Node node, T value, CompareDelegate compare) {
           if (node == null) {
             node = new Node(value, this); 
             return node.Rebalance(); 
@@ -85,7 +87,7 @@
             return node.Insert(value, compare);
         }    
     
-        public Node Find(T value, Func<T, T, int> compare) {
+        public Node Find(T value, CompareDelegate compare) {
           int cmp = compare(this.value, value);
           if (cmp == 0) return this;
           if (cmp > 0) return left.Find(value,compare);
@@ -473,7 +475,7 @@ Sibling heights should only differ by 1:
 
     Generating 1000000 random elements...
     Sorting 1000000 random elements...
-    Insertion: 1175 ToList: 1277 Combined: 2452
+    Insertion: 1108 ToList: 1209 Combined: 2317
 
 ## Range Queries and Range Maps<a id="orgheadline10"></a>
 
