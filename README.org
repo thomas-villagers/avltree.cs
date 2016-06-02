@@ -150,7 +150,7 @@
 - =Insert= :: O(log n)
 - =Find= :: O(log n)
 
-* ToList Extensions 
+* ToList, Range and Map Extensions 
 
 #+BEGIN_SRC csharp :tangle src/avltreelistextensions.cs
   using System; 
@@ -649,7 +649,7 @@ digraph G {
 #+RESULTS:
 [[file:images/avltree4.png]]
 
-** Traversal 
+** Traversal Pre-, Post- and Inorder, Map 
 
 #+BEGIN_SRC csharp :tangle demo/testtraverse.cs 
 using System; 
@@ -691,7 +691,6 @@ mono demo/testtraverse.exe
 : 8 4 2 1 3 6 5 7 12 10 9 11 14 13 15 
 : 2 4 6 8 10 12 14 16 18 20 22 24 26 28 30 
 
-
 ** Sort Performance 
 
 #+BEGIN_SRC csharp :tangle demo/treesort.cs 
@@ -716,9 +715,9 @@ public class Treesort {
       T.Insert(i); 
     var elapsedInsert = sw.ElapsedMilliseconds;
     T.ToList(); 
-    var elapsedRemove = sw.ElapsedMilliseconds;
+    var elapsedToList = sw.ElapsedMilliseconds;
     sw.Stop(); 
-    Console.WriteLine("Insertion: {0} ToList: {1} Combined: {2}", elapsedInsert, elapsedRemove, elapsedInsert + elapsedRemove); 
+    Console.WriteLine("Insertion: {0} ToList: {1} Combined: {2}", elapsedInsert, elapsedToList, elapsedInsert + elapsedToList); 
   }
 }
 #+END_SRC
@@ -733,8 +732,7 @@ mono demo/treesort.exe
 : Sorting 1000000 random elements...
 : Insertion: 1180 ToList: 1277 Combined: 2457
 
-
-** Range Queries 
+** Range Queries and Range Maps
 
 #+BEGIN_SRC csharp :tangle demo/testrange.cs 
 using System;

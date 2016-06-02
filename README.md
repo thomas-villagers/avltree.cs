@@ -3,7 +3,7 @@
 <div id="text-table-of-contents">
 <ul>
 <li><a href="#orgheadline1">1. Balanced binary AVL Tree</a></li>
-<li><a href="#orgheadline2">2. ToList Extensions</a></li>
+<li><a href="#orgheadline2">2. ToList, Range and Map Extensions</a></li>
 <li><a href="#orgheadline3">3. Graphviz Output</a></li>
 <li><a href="#orgheadline11">4. Demo</a>
 <ul>
@@ -11,9 +11,9 @@
 <li><a href="#orgheadline5">4.2. Double Rotations</a></li>
 <li><a href="#orgheadline6">4.3. Strings</a></li>
 <li><a href="#orgheadline7">4.4. Random Insertion</a></li>
-<li><a href="#orgheadline8">4.5. Traversal</a></li>
+<li><a href="#orgheadline8">4.5. Traversal Pre-, Post- and Inorder, Map</a></li>
 <li><a href="#orgheadline9">4.6. Sort Performance</a></li>
-<li><a href="#orgheadline10">4.7. Range Queries</a></li>
+<li><a href="#orgheadline10">4.7. Range Queries and Range Maps</a></li>
 </ul>
 </li>
 </ul>
@@ -169,7 +169,7 @@
 -   **`Insert`:** O(log n)
 -   **`Find`:** O(log n)
 
-# ToList Extensions<a id="orgheadline2"></a>
+# ToList, Range and Map Extensions<a id="orgheadline2"></a>
 
     using System; 
     using System.Collections.Generic; 
@@ -402,7 +402,7 @@ Sibling heights should only differ by 1:
 
 ![img](images/avltree4.png)
 
-## Traversal<a id="orgheadline8"></a>
+## Traversal Pre-, Post- and Inorder, Map<a id="orgheadline8"></a>
 
     using System; 
     using System.Collections.Generic; 
@@ -462,9 +462,9 @@ Sibling heights should only differ by 1:
           T.Insert(i); 
         var elapsedInsert = sw.ElapsedMilliseconds;
         T.ToList(); 
-        var elapsedRemove = sw.ElapsedMilliseconds;
+        var elapsedToList = sw.ElapsedMilliseconds;
         sw.Stop(); 
-        Console.WriteLine("Insertion: {0} ToList: {1} Combined: {2}", elapsedInsert, elapsedRemove, elapsedInsert + elapsedRemove); 
+        Console.WriteLine("Insertion: {0} ToList: {1} Combined: {2}", elapsedInsert, elapsedToList, elapsedInsert + elapsedToList); 
       }
     }
 
@@ -473,9 +473,9 @@ Sibling heights should only differ by 1:
 
     Generating 1000000 random elements...
     Sorting 1000000 random elements...
-    Insertion: 1133 ToList: 1236 Combined: 2369
+    Insertion: 1175 ToList: 1277 Combined: 2452
 
-## Range Queries<a id="orgheadline10"></a>
+## Range Queries and Range Maps<a id="orgheadline10"></a>
 
     using System;
     using System.Collections.Generic; 
